@@ -1,0 +1,66 @@
+## Generated mta.yaml based on template version 0.4.0
+## appName = capjava01
+## language=java; multitenant=false
+## approuter=
+_schema-version: '3.1'
+ID: capjava01
+version: 1.0.0-SNAPSHOT
+description: "capjava01 application"
+parameters:
+  enable-parallel-deployments: true
+   
+build-parameters:
+  before-all:
+   - builder: custom
+     commands:
+      - npm install --production
+      - npx -p @sap/cds-dk cds build --production
+
+modules:
+ # --------------------- SERVER MODULE ------------------------
+ - name: capjava01-srv
+ # ------------------------------------------------------------
+   type: java
+   path: srv
+   parameters:
+     buildpack: java_buildpack
+   properties:
+     SPRING_PROFILES_ACTIVE: cloud
+   build-parameters:
+     builder: custom
+     commands: [ mvn clean package ]
+     build-result: "target/*-exec.[wj]ar"
+   requires:
+    # Resources extracted from CAP configuration
+    - name: capjava01-db
+   provides:
+    - name: srv-api      # required by consumers of CAP services (e.g. approuter)
+      properties:
+        srv-url: ${default-url}
+
+ # -------------------- SIDECAR MODULE ------------------------
+ - name: capjava01-db-deployer
+ # ------------------------------------------------------------
+   type: hdb
+   path: db  
+   parameters:
+     buildpack: nodejs_buildpack
+   requires:
+    # 'hana' and 'xsuaa' resources extracted from CAP configuration
+    - name: capjava01-db
+
+
+resources:
+ # services extracted from CAP configuration
+ # 'service-plan' can be configured via 'cds.requires.<name>.vcap.plan'
+# ------------------------------------------------------------
+ - name: capjava01-db
+# ------------------------------------------------------------
+   type: com.sap.xs.hdi-container
+   parameters:
+     service: hana  # or 'hanatrial' on trial landscapes
+     service-plan: hdi-shared
+   properties:
+     hdi-service-name: ${service-name}
+
+

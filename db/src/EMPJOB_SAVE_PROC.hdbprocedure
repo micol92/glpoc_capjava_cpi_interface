@@ -1,0 +1,69 @@
+PROCEDURE EMPJOB_SAVE_PROC (
+    IN  I_TABLE TABLE(USERID NVARCHAR(20),
+                     STARTDATE NVARCHAR(25),
+                     SEQNUMBER NVARCHAR(2),
+                     RECORD NCLOB              
+    ),
+    OUT O_TABLE TABLE(USERID NVARCHAR(20),
+                     STARTDATE NVARCHAR(25),
+                     SEQNUMBER NVARCHAR(2),
+                     UNIQUEKEY BIGINT                     
+    )
+    
+)
+LANGUAGE SQLSCRIPT
+SQL SECURITY INVOKER 
+
+AS
+BEGIN
+
+    DECLARE v_cnt BIGINT;
+
+    SELECT COUNT(*)
+    INTO   v_cnt
+    FROM   :I_TABLE
+    ;
+
+    O_TABLE_NEW =   SELECT  A.USERID
+                        ,A.STARTDATE
+                        ,A.SEQNUMBER
+                        ,A.RECORD
+                        ,CASE WHEN B.UNIQUEKEY IS NULL THEN EMPJOB_USERID_SEQ.NEXTVAL ELSE B.UNIQUEKEY END AS UNIQUEKEY
+                FROM    :I_TABLE A
+                LEFT OUTER JOIN EMPJOB B
+                ON A.USERID = B.USERID
+                AND A.STARTDATE = B.STARTDATE
+                AND A.SEQNUMBER = B.SEQNUMBER         
+                WHERE B.UNIQUEKEY IS NULL
+                WITH HINT (NO_INLINE)
+                ;
+
+    O_TABLE_OLD =   SELECT  A.USERID
+                        ,A.STARTDATE
+                        ,A.SEQNUMBER
+                        ,B.UNIQUEKEY
+                FROM    :I_TABLE A
+                INNER JOIN EMPJOB B
+                ON A.USERID = B.USERID
+                AND A.STARTDATE = B.STARTDATE
+                AND A.SEQNUMBER = B.SEQNUMBER         
+                WITH HINT (NO_INLINE)
+                ;
+
+    INSERT INTO EMPJOB(USERID,STARTDATE,SEQNUMBER,LARGERECORD,UNIQUEKEY)   
+    SELECT USERID, STARTDATE, SEQNUMBER, RECORD, UNIQUEKEY FROM :O_TABLE_NEW
+    ;
+
+    O_TABLE =  SELECT  USERID
+                        ,STARTDATE
+                        ,SEQNUMBER
+                        ,UNIQUEKEY    
+                FROM    :O_TABLE_OLD
+               UNION ALL
+               SELECT  USERID
+                        ,STARTDATE
+                        ,SEQNUMBER
+                        ,UNIQUEKEY    
+                FROM    :O_TABLE_NEW 
+            ;                
+END

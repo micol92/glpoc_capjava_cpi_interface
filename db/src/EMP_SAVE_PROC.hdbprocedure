@@ -1,0 +1,48 @@
+PROCEDURE EMP_SAVE_PROC (
+    IN  I_TABLE TABLE(USERID NVARCHAR(20),
+                     ACTION NVARCHAR(5),
+                     OCCUPATIONALLEVELS NVARCHAR(20),
+                     WORKSCHEDULECODE NVARCHAR(30),
+                     FGTSOPTANT NVARCHAR(6),
+                     COMMITMENTINDICATOR NVARCHAR(20),
+                     ENDDATE TIMESTAMP                     
+    ),
+    OUT O_TABLE TABLE(USERID NVARCHAR(20),
+                     USERID_SEQ BIGINT,                    
+                     ACTION NVARCHAR(5),
+                     OCCUPATIONALLEVELS NVARCHAR(20),
+                     WORKSCHEDULECODE NVARCHAR(30),
+                     FGTSOPTANT NVARCHAR(6),
+                     COMMITMENTINDICATOR NVARCHAR(20),
+                     ENDDATE TIMESTAMP                     
+    )
+    
+)
+LANGUAGE SQLSCRIPT
+SQL SECURITY INVOKER 
+
+AS
+BEGIN
+
+    DECLARE v_cnt BIGINT;
+
+    SELECT COUNT(*)
+    INTO   v_cnt
+    FROM   :I_TABLE
+    ;
+
+    O_TABLE =   SELECT  A.USERID, EMP_USERID_SEQ.NEXTVAL AS USERID_SEQ
+                        ,A.ACTION
+                        ,A.OCCUPATIONALLEVELS
+                        ,A.WORKSCHEDULECODE
+                        ,A.FGTSOPTANT
+                        ,A.COMMITMENTINDICATOR         
+                        ,A.ENDDATE               
+                FROM    :I_TABLE A;
+
+    INSERT INTO SAMPLE_EMPLOYEE(USERID,USERID_SEQ,ACTION,OCCUPATIONALLEVELS,WORKSCHEDULECODE,FGTSOPTANT,COMMITMENTINDICATOR,ENDDATE)   
+    SELECT * FROM :O_TABLE
+    ;
+
+
+END
