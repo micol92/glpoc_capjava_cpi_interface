@@ -48,7 +48,6 @@ entity EmpJob {
   key seqNumber : String(2);
   key uniquekey : Integer64;
   Record : LargeString;
-  LargeRecord : LargeString;
   create_user_id: String @cds.on.insert: $user;
   update_user_id: String @cds.on.insert: $user @cds.on.update: $user;
   system_create_dtm: DateTime @cds.on.insert: $now;

@@ -19,7 +19,6 @@ service SampleMgrV4Service {
         startDate : String(25);
         seqNumber: String(2);
         Record: LargeString;
-        LargeRecord: LargeString;
     }
     
     type EmpJobHeadersOutput: {
